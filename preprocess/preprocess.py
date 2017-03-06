@@ -9,7 +9,7 @@ def resample(image, step):
     index = []
     for i in range(size):
         if i%step:
-           index.append(i)
+            index.append(i)
     image = numpy.delete(image, index, 0)
     image = numpy.delete(image, index, 1)
     return image

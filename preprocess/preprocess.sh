@@ -1,7 +1,6 @@
 #!/bin/sh
 
 id=$1
-cluster=$2
 rm -rf /mnt/out
 mkdir /mnt/out
 cd /mnt/out
@@ -16,10 +15,5 @@ python /root/workspace/preprocess/preprocess.py -p /mnt/out/ -i $id
 
 for i in `ls -al | grep '\.[0-9]' | awk '{print $9}' | sort | xargs`
 do
-    echo "/mnt/out/$i" >> files_list
+    echo "/mnt/out/$i" >> ../files_list
 done
-
-if [ $cluster == 'cluster' ]
-then
-    echo $cluster
-fi
