@@ -44,13 +44,14 @@ def vgg_bn_drop(input):
             conv_batchnorm_drop_rate=dropouts,
             pool_type=MaxPooling())
 
-    conv1 = conv_block(input, 64, 2, [0.3, 0], 3)
+    conv1 = conv_block(input, 64, 1, [0.3, 0], 3)
     conv2 = conv_block(conv1, 128, 2, [0.4, 0])
-    conv3 = conv_block(conv2, 256, 3, [0.4, 0.4, 0])
-    conv4 = conv_block(conv3, 512, 3, [0.4, 0.4, 0])
-    conv5 = conv_block(conv4, 512, 3, [0.4, 0.4, 0])
+    conv3 = conv_block(conv2, 256, 2, [0.4, 0.4, 0])
+    #conv4 = conv_block(conv3, 512, 3, [0.4, 0.4, 0])
+    #conv5 = conv_block(conv4, 512, 3, [0.4, 0.4, 0])
 
-    drop = dropout_layer(input=conv5, dropout_rate=0.5)
+    #drop = dropout_layer(input=conv5, dropout_rate=0.5)
+    drop = dropout_layer(input=conv3, dropout_rate=0.5)
     fc1 = fc_layer(input=drop, size=512, act=LinearActivation())
     bn = batch_norm_layer(
         input=fc1, act=ReluActivation(), layer_attr=ExtraAttr(drop_rate=0.5))
