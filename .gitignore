@@ -1,0 +1,4 @@
+discard
+output
+*.log
+*.pyc
