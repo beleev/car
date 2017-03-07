@@ -3,10 +3,10 @@ from paddle.trainer.PyDataProvider2 import *
 
 def hook(settings, attrNum, imageWidth, 
          imageHeight, channel, is_train, **kwargs):
-    settings.input_types = [
-        dense_vector(imageWidth*imageHeight*channel),
-        dense_vector(attrNum)
-    ]
+    settings.input_types = {
+        'image': dense_vector(imageWidth*imageHeight*channel),
+        'curve': dense_vector(attrNum)
+    }
     settings.is_train = is_train
 
 def load_data(file_name):

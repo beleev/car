@@ -7,8 +7,8 @@ if not is_predict:
 
     args = {
         'attrNum' : 1,
-        'imageWidth' : 160,
-        'imageHeight' : 160,
+        'imageWidth' : 80,
+        'imageHeight' : 80,
         'channel' : 3
     }
 
@@ -59,7 +59,7 @@ def vgg_bn_drop(input):
     return fc2
 
 
-datadim = 3 * 160 *160
+datadim = 3 * 80 * 80
 data = data_layer(name='image', size=datadim)
 net = vgg_bn_drop(data)
 out = fc_layer(input=net, size=1, act=SigmoidActivation())
