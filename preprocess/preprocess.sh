@@ -3,7 +3,7 @@
 id=$1
 hostnum=$2
 
-rm -rf /mnt/out* /mnt/temp /mnt/dir_sp_file*
+rm -rf /mnt/out* /mnt/temp /mnt/*sp_file*
 mkdir /mnt/out
 cd /mnt/out
 wget http://roadhack-sources.bj.bcebos.com/train/image/"$id".zip -O image.zip &
@@ -38,6 +38,6 @@ then
         do
             mv /mnt/temp/$j dir_$i/
         done
-        tar czf "$i".tgz $i
+        tar czf "$i".tgz dir_$i
     done
 fi
