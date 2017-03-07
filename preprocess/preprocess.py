@@ -5,30 +5,36 @@ from optparse import OptionParser
 
 size = 320
 
-def resample(image, step):
+def resize(image, newsize):
     index = []
+    step = float(size)/float(newsize)
+    reserve = [int(i*step) for i in range(newsize)]
+    it = 0
     for i in range(size):
-        if i%step:
+        if i == reserve[it]:
+            if it < newsize - 1:
+                it += 1
+        else:
             index.append(i)
     image = numpy.delete(image, index, 0)
     image = numpy.delete(image, index, 1)
     return image
 
 
-def split_h5_to_pic(h5_image, h5_attr, outpath, step):
+def split_h5_to_pic(h5_image, h5_attr, outpath, newsize):
     images = h5py.File(h5_image, 'r')
     attrs = h5py.File(h5_attr, 'r')
     imagelen = len(attrs["attrs"])
-    mean = numpy.zeros((size*size*3/step/step),dtype="float32")
+    mean = numpy.zeros((newsize*newsize*3),dtype="float32")
     for i in range(1000):
         num = random.randint(0, imagelen)
         image_time = "{:.3f}".format(attrs["attrs"][num][0])
-        mean += resample(images[image_time].value, step).flatten().astype('float32')
+        mean += resize(images[image_time].value, newsize).flatten().astype('float32')
     mean /= 1000
     for i in attrs["attrs"]:
         image_time = "{:.3f}".format(i[0])
         image = images[image_time].value
-        resampled_image = resample(image, step)
+        resampled_image = resize(image, newsize)
         outfile = h5py.File((outpath + str(image_time)), 'w')
         outfile['image'] = resampled_image.flatten().astype('float32') - mean
         outfile['curve'] = i[3]
@@ -59,4 +65,4 @@ if __name__ == '__main__':
     data_id = options.data_id
     image = data_path + "image/" + data_id + ".h5"
     attr = data_path + "attr/" + data_id + ".h5"
-    split_h5_to_pic(image, attr, data_path, 4)
+    split_h5_to_pic(image, attr, data_path, 120)

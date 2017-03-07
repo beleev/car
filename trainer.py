@@ -7,8 +7,8 @@ if not is_predict:
 
     args = {
         'attrNum' : 1,
-        'imageWidth' : 80,
-        'imageHeight' : 80,
+        'imageWidth' : 120,
+        'imageHeight' : 120,
         'channel' : 3
     }
 
@@ -59,10 +59,10 @@ def vgg_bn_drop(input):
     return fc2
 
 
-datadim = 3 * 80 * 80
+datadim = 3 * 120 * 120
 data = data_layer(name='image', size=datadim)
 net = vgg_bn_drop(data)
-out = fc_layer(input=net, size=1, act=SigmoidActivation())
+out = fc_layer(input=net, size=1, act=LinearActivation())
 if not is_predict:
     lbl = data_layer(name="curve", size=1)
     cost = regression_cost(input=out, label=lbl)
