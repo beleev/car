@@ -62,7 +62,8 @@ def vgg_bn_drop(input):
 datadim = 3 * 120 * 120
 data = data_layer(name='image', size=datadim)
 net = vgg_bn_drop(data)
-out = fc_layer(input=net, size=1, act=LinearActivation())
+#out = fc_layer(input=net, size=1, act=LinearActivation())
+out = fc_layer(input=net, size=1, act=SigmoidActivation())
 if not is_predict:
     lbl = data_layer(name="curve", size=1)
     cost = regression_cost(input=out, label=lbl)

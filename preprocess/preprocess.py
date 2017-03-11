@@ -31,6 +31,9 @@ def split_h5_to_pic(h5_image, h5_attr, outpath, newsize):
         image_time = "{:.3f}".format(attrs["attrs"][num][0])
         mean += resize(images[image_time].value, newsize).flatten().astype('float32')
     mean /= 1000
+    meanfile = h5py.File((outpath + "meanimage"), 'w')
+    meanfile['image'] = mean
+    meanfile.close()
     for i in attrs["attrs"]:
         image_time = "{:.3f}".format(i[0])
         image = images[image_time].value
