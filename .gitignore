@@ -1,4 +1,3 @@
-discard
-output
 *.log
 *.pyc
+*data*

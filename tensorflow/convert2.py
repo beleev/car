@@ -1,8 +1,10 @@
 import argparse
 import os
 import sys
+import h5py
 
 import tensorflow as tf
+from tensorflow.contrib.learn.python.learn.datasets import base
 
 FLAGS = None
 
@@ -11,8 +13,13 @@ def _int64_feature(value):
     return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
 
 
-def read_data_sets():
+def read_data_sets(train_dir,
+                   id_num,
+                   roc=True,
+                   validation_size=5000):
     pass
+    
+    
 
 
 def convert_to(data_set, name):
