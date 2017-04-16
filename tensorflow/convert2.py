@@ -110,7 +110,7 @@ def read_data_sets(train_dir,
     validation = DataSet(validation_images,
                          validation_labels,
                          roc=roc)
-    return base.Datasets(train=train, validation=validation)
+    return base.Datasets(train=train, validation=validation, test=None)
 
 
 def convert_to(data_set, name):
