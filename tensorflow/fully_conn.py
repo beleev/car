@@ -3,6 +3,7 @@ import math
 import tensorflow as tf
 
 NUM_CLASSES = 10
+IMAGE_PIXELS = 320 * 320 * 3
 INPUT = 100
 
 

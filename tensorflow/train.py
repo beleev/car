@@ -1,14 +1,15 @@
 import argparse
-import os
+import os.path
 import sys
+import time
 
 import tensorflow as tf
+import fully_conn
 
 FLAGS = None
 
 TRAIN_FILE = 'train.tfrecords'
 VALIDATION_FILE = 'validation.tfrecords'
-IMAGE_PIXELS = 320 * 320 * 3
 
 
 def read_and_decode(filename_queue):
@@ -26,7 +27,7 @@ def read_and_decode(filename_queue):
     # length mnist.IMAGE_PIXELS) to a uint8 tensor with shape
     # [mnist.IMAGE_PIXELS].
     image = tf.decode_raw(features['image_raw'], tf.float32)
-    image.set_shape([IMAGE_PIXELS])
+    image.set_shape([fully_conn.IMAGE_PIXELS])
   
     # OPTIONAL: Could reshape into a 28x28 image and apply distortions
     # here.  Since we are not applying any distortions in this
@@ -83,8 +84,6 @@ def inputs(train, batch_size, num_epochs):
 
 
 def run_training():
-    images, labels = inputs(train=True, batch_size=FLAGS.batch_size,
-                            num_epochs=FLAGS.num_epochs)
     # Tell TensorFlow that the model will be built into the default Graph.
     with tf.Graph().as_default():
         # Input images and labels.
@@ -92,15 +91,15 @@ def run_training():
                                 num_epochs=FLAGS.num_epochs)
     
         # Build a Graph that computes predictions from the inference model.
-        logits = mnist.inference(images,
+        logits = fully_conn.inference(images,
                                  FLAGS.hidden1,
                                  FLAGS.hidden2)
     
         # Add to the Graph the loss calculation.
-        loss = mnist.loss(logits, labels)
+        loss = fully_conn.loss(logits, labels)
     
         # Add to the Graph operations that train the model.
-        train_op = mnist.training(loss, FLAGS.learning_rate)
+        train_op = fully_conn.training(loss, FLAGS.learning_rate)
     
         # The op for initializing the variables.
         init_op = tf.group(tf.global_variables_initializer(),
@@ -171,6 +170,24 @@ if __name__ == '__main__':
         type=int,
         default=2,
         help='Number of epochs to run trainer.'
+    )
+    parser.add_argument(
+        '--hidden1',
+        type=int,
+        default=128,
+        help='Number of units in hidden layer 1.'
+    )
+    parser.add_argument(
+        '--hidden2',
+        type=int,
+        default=32,
+        help='Number of units in hidden layer 2.'
+    )
+    parser.add_argument(
+        '--learning_rate',
+        type=float,
+        default=0.01,
+        help='Initial learning rate.'
     )
     FLAGS, unparsed = parser.parse_known_args()
     tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)

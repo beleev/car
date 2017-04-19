@@ -137,7 +137,7 @@ def convert_to(data_set, name):
                 'width': _int64_feature(cols),
                 'depth': _int64_feature(depth),
                 'label': _float_feature(labels[index]),
-                'image': _bytes_feature(image_raw)}))
+                'image_raw': _bytes_feature(image_raw)}))
         writer.write(example.SerializeToString())
     writer.close()
 
