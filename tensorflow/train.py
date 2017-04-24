@@ -6,6 +6,7 @@ import time
 import tensorflow as tf
 import fully_conn
 
+
 FLAGS = None
 
 TRAIN_FILE = 'train.tfrecords'
@@ -27,7 +28,7 @@ def read_and_decode(filename_queue):
     # length mnist.IMAGE_PIXELS) to a uint8 tensor with shape
     # [mnist.IMAGE_PIXELS].
     image = tf.decode_raw(features['image_raw'], tf.float32)
-    image.set_shape([fully_conn.IMAGE_PIXELS])
+    image = tf.reshape(image, fully_conn.IMAGE_PIXELS)
   
     # OPTIONAL: Could reshape into a 28x28 image and apply distortions
     # here.  Since we are not applying any distortions in this
@@ -38,7 +39,7 @@ def read_and_decode(filename_queue):
     image = image - 0.5
   
     # Convert label from a scalar uint8 tensor to an int32 scalar.
-    label = tf.cast(features['label'], tf.float32)
+    label = features['label']
   
     return image, label
 
@@ -111,6 +112,7 @@ def run_training():
         # Initialize the variables (the trained variables and the
         # epoch counter).
         sess.run(init_op)
+
     
         # Start input enqueue threads.
         coord = tf.train.Coordinator()
@@ -168,8 +170,14 @@ if __name__ == '__main__':
     parser.add_argument(
         '--num_epochs',
         type=int,
-        default=2,
+        default=10,
         help='Number of epochs to run trainer.'
+    )
+    parser.add_argument(
+        '--learning_rate',
+        type=float,
+        default=0.01,
+        help='Initial learning rate.'
     )
     parser.add_argument(
         '--hidden1',
@@ -182,12 +190,6 @@ if __name__ == '__main__':
         type=int,
         default=32,
         help='Number of units in hidden layer 2.'
-    )
-    parser.add_argument(
-        '--learning_rate',
-        type=float,
-        default=0.01,
-        help='Initial learning rate.'
     )
     FLAGS, unparsed = parser.parse_known_args()
     tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)

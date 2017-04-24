@@ -3,7 +3,7 @@ import math
 import tensorflow as tf
 
 NUM_CLASSES = 10
-IMAGE_PIXELS = 320 * 320 * 3
+IMAGE_PIXELS = (320 , 320 , 3)
 INPUT = 100
 
 
@@ -39,10 +39,10 @@ def inference(images, hidden1_units, hidden2_units):
     # Linear
     with tf.name_scope('softmax_linear'):
         weights = tf.Variable(
-                  tf.truncated_normal([hidden2_units, NUM_CLASSES],
+                  tf.truncated_normal([hidden2_units, 1],
                   stddev=1.0 / math.sqrt(float(hidden2_units))),
                   name='weights')
-        biases = tf.Variable(tf.zeros([NUM_CLASSES]),
+        biases = tf.Variable(tf.zeros([1]),
                  name='biases')
         logits = tf.matmul(hidden2, weights) + biases
     return logits
@@ -58,10 +58,12 @@ def loss(logits, labels):
     Returns:
       loss: Loss tensor of type float.
     """
-    labels = tf.to_int64(labels)
-    cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
-        labels=labels, logits=logits, name='xentropy')
-    return tf.reduce_mean(cross_entropy, name='xentropy_mean')
+    labels = tf.to_float(labels)
+    logits = tf.to_float(logits)
+    #cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
+    #    labels=labels, logits=logits, name='xentropy')
+    cost = tf.reduce_sum(tf.pow(logits - labels, 2)) / tf.to_float(2 * tf.shape(labels)[0])
+    return tf.reduce_mean(cost, name='xentropy_mean')
 
 
 def training(loss, learning_rate):
