@@ -2,6 +2,7 @@ import h5py
 import tensorflow as tf
 import numpy as np
 
+from tensorflow.python import debug as tf_debug
 
 path = '/root/car/data/'
 
@@ -27,8 +28,8 @@ class DataSet(object):
             for t in self.time[begin:end]:
                 image_list.append(self.image["{:.3f}".format(t)])
             images = np.array(image_list)
-            images = np.multiply(images.astype(np.float32), 1.0 / 255.0)
-            images = images - 0.5
+            images = np.multiply(images.astype(np.float32), 2.0 / 255.0)
+            images = images - 1
             labels = self.label[begin:end].reshape(-1, 1)
             if end == self.num:
                 self.index = 0
@@ -54,27 +55,33 @@ class Trainer(object):
         x = tf.nn.bias_add(x, b)
         return x
     
-    def maxpool2d(self, x, k=2):
-        return tf.nn.max_pool(x, ksize=[1, k, k, 1], strides=[1, k, k, 1], padding='SAME')
+    def pool2d(self, x, k=2):
+        return tf.nn.avg_pool(x, ksize=[1, k, k, 1], strides=[1, k, k, 1], padding='SAME')
     
     def conv_net(self, x, weights, biases, dropout):
         conv1 = self.conv2d(x, weights['wc1'], biases['bc1'])
-        conv1 = self.maxpool2d(conv1, k=2)
+        conv1 = self.pool2d(conv1, k=2)
         conv2 = self.conv2d(conv1, weights['wc2'], biases['bc2'])
-        conv2 = self.maxpool2d(conv2, k=2)
         conv3 = self.conv2d(conv2, weights['wc3'], biases['bc3'])
-        conv3 = self.maxpool2d(conv3, k=2)
+        conv4 = self.conv2d(conv3, weights['wc4'], biases['bc4'], strides=1)
+        conv5 = self.conv2d(conv4, weights['wc5'], biases['bc5'], strides=1)
 
-        fc1 = tf.reshape(conv3, [-1, weights['wd1'].get_shape().as_list()[0]])
+        fc1 = tf.reshape(conv5, [-1, weights['wd1'].get_shape().as_list()[0]])
         fc1 = tf.add(tf.matmul(fc1, weights['wd1']), biases['bd1'])
+        fc1 = tf.nn.relu(fc1)
         fc2 = tf.nn.dropout(fc1, dropout)
-    
         fc2 = tf.add(tf.matmul(fc2, weights['wd2']), biases['bd2'])
+        fc2 = tf.nn.relu(fc2)
         fc3 = tf.nn.dropout(fc2, dropout)
 
         fc3 = tf.add(tf.matmul(fc3, weights['wd3']), biases['bd3'])
-        fc3 = tf.nn.dropout(fc3, dropout)
-        out = tf.add(tf.matmul(fc3, weights['out']), biases['out'])
+        fc3 = tf.nn.relu(fc3)
+        fc4 = tf.nn.dropout(fc3, dropout)
+        fc4 = tf.add(tf.matmul(fc4, weights['wd4']), biases['bd4'])
+        fc4 = tf.nn.relu(fc4)
+        fc5 = tf.nn.dropout(fc4, dropout)
+        out = tf.add(tf.matmul(fc5, weights['out']), biases['out'])
+        out = tf.nn.tanh(out)
         return out
 
     def build_net(self):
@@ -84,26 +91,32 @@ class Trainer(object):
 
         weights = {
             # 5x5 conv, 3 input, 24 outputs
-            'wc1': tf.Variable(tf.random_normal([5, 5, 3, 24])),
-            'wc2': tf.Variable(tf.random_normal([3, 3, 24, 48])),
-            'wc3': tf.Variable(tf.random_normal([3, 3, 48, 64])),
+            'wc1': tf.Variable(tf.random_normal([5, 5, 3, 24], mean=1/25)),
+            'wc2': tf.Variable(tf.random_normal([5, 5, 24, 36], mean=1/25)),
+            'wc3': tf.Variable(tf.random_normal([5, 5, 36, 48], mean=1/25)),
+            'wc4': tf.Variable(tf.random_normal([3, 3, 48, 64], mean=1/9)),
+            'wc5': tf.Variable(tf.random_normal([3, 3, 64, 64], mean=1/9)),
             # fully connected, w*h*64 inputs, 1 outputs
-            'wd1': tf.Variable(tf.random_normal([1600, 1024])),
-            'wd2': tf.Variable(tf.random_normal([1024, 128])),
-            'wd3': tf.Variable(tf.random_normal([128, 10])),
+            'wd1': tf.Variable(tf.random_normal([25600, 1164], mean=1/25600)),
+            'wd2': tf.Variable(tf.random_normal([1164, 100], mean=1/1164)),
+            'wd3': tf.Variable(tf.random_normal([100, 50], mean=1/100)),
+            'wd4': tf.Variable(tf.random_normal([50, 10], mean=1/50)),
             # out
-            'out': tf.Variable(tf.random_normal([10, 1]))
+            'out': tf.Variable(tf.random_normal([10, 1], mean=1/10))
         }
         
         biases = {
             # conv
             'bc1': tf.Variable(tf.random_normal([24])),
-            'bc2': tf.Variable(tf.random_normal([48])),
-            'bc3': tf.Variable(tf.random_normal([64])),
+            'bc2': tf.Variable(tf.random_normal([36])),
+            'bc3': tf.Variable(tf.random_normal([48])),
+            'bc4': tf.Variable(tf.random_normal([64])),
+            'bc5': tf.Variable(tf.random_normal([64])),
             # full conn
-            'bd1': tf.Variable(tf.random_normal([1024])),
-            'bd2': tf.Variable(tf.random_normal([128])),
-            'bd3': tf.Variable(tf.random_normal([10])),
+            'bd1': tf.Variable(tf.random_normal([1164])),
+            'bd2': tf.Variable(tf.random_normal([100])),
+            'bd3': tf.Variable(tf.random_normal([50])),
+            'bd4': tf.Variable(tf.random_normal([10])),
             # out
             'out': tf.Variable(tf.random_normal([1]))
         }
@@ -117,6 +130,7 @@ class Trainer(object):
         init = tf.global_variables_initializer()
         with tf.Session() as sess:
             sess.run(init)
+            #sess = tf_debug.LocalCLIDebugWrapperSession(sess)
             step = 1
             # Keep training until reach max iterations
             while step * self.batch_size < self.training_iters:
