@@ -20,7 +20,7 @@ class DataSet(object):
 
     def read(self, size):
         if size + self.index > self.num:
-            return read(self, self.num - self.index)
+            return self.read(self, self.num - self.index)
         else:
             begin = self.index
             end = self.index + size
@@ -45,7 +45,7 @@ class Trainer(object):
         self.dropout = 0.75
 
         self.training_iters = 3000
-        self.batch_size = 3
+        self.batch_size = 50
         self.display_step = 1
 
         self.data = DataSet(id_num)
@@ -81,7 +81,7 @@ class Trainer(object):
         fc4 = tf.nn.relu(fc4)
         fc5 = tf.nn.dropout(fc4, dropout)
         out = tf.add(tf.matmul(fc5, weights['out']), biases['out'])
-        out = tf.nn.tanh(out)
+        #out = tf.nn.tanh(out)
         return out
 
     def build_net(self):
@@ -91,18 +91,18 @@ class Trainer(object):
 
         weights = {
             # 5x5 conv, 3 input, 24 outputs
-            'wc1': tf.Variable(tf.random_normal([5, 5, 3, 24], mean=1/25)),
-            'wc2': tf.Variable(tf.random_normal([5, 5, 24, 36], mean=1/25)),
-            'wc3': tf.Variable(tf.random_normal([5, 5, 36, 48], mean=1/25)),
-            'wc4': tf.Variable(tf.random_normal([3, 3, 48, 64], mean=1/9)),
-            'wc5': tf.Variable(tf.random_normal([3, 3, 64, 64], mean=1/9)),
+            'wc1': tf.Variable(tf.random_normal([5, 5, 3, 24], mean=1/25, stddev=5e-2)),
+            'wc2': tf.Variable(tf.random_normal([5, 5, 24, 36], mean=1/25, stddev=5e-2)),
+            'wc3': tf.Variable(tf.random_normal([5, 5, 36, 48], mean=1/25, stddev=5e-2)),
+            'wc4': tf.Variable(tf.random_normal([3, 3, 48, 64], mean=1/9, stddev=5e-2)),
+            'wc5': tf.Variable(tf.random_normal([3, 3, 64, 64], mean=1/9, stddev=5e-2)),
             # fully connected, w*h*64 inputs, 1 outputs
-            'wd1': tf.Variable(tf.random_normal([25600, 1164], mean=1/25600)),
-            'wd2': tf.Variable(tf.random_normal([1164, 100], mean=1/1164)),
-            'wd3': tf.Variable(tf.random_normal([100, 50], mean=1/100)),
-            'wd4': tf.Variable(tf.random_normal([50, 10], mean=1/50)),
+            'wd1': tf.Variable(tf.random_normal([25600, 1164], mean=1/25600, stddev=5e-2)),
+            'wd2': tf.Variable(tf.random_normal([1164, 100], mean=1/1164, stddev=5e-2)),
+            'wd3': tf.Variable(tf.random_normal([100, 50], mean=1/100, stddev=5e-2)),
+            'wd4': tf.Variable(tf.random_normal([50, 10], mean=1/50, stddev=5e-2)),
             # out
-            'out': tf.Variable(tf.random_normal([10, 1], mean=1/10))
+            'out': tf.Variable(tf.random_normal([10, 1], mean=1/10, stddev=5e-2))
         }
         
         biases = {
