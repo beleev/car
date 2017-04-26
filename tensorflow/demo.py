@@ -20,7 +20,7 @@ class DataSet(object):
 
     def read(self, size):
         if size + self.index > self.num:
-            return self.read(self, self.num - self.index)
+            return self.read(self.num - self.index)
         else:
             begin = self.index
             end = self.index + size
@@ -44,8 +44,8 @@ class Trainer(object):
         self.learning_rate = 0.001
         self.dropout = 0.75
 
-        self.training_iters = 3000
-        self.batch_size = 50
+        self.training_iters = 6000
+        self.batch_size = 100
         self.display_step = 1
 
         self.data = DataSet(id_num)
