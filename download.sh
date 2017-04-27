@@ -2,8 +2,9 @@
 
 id=$1
 
-mkdir -p /root/car/data/$id
-cd /root/car/data/$id
+rm -rf /mnt/data/$id
+mkdir -p /mnt/data/$id
+cd /mnt/data/$id
 wget http://roadhack-sources.bj.bcebos.com/train/image/"$id".zip -O image.zip &
 wget http://roadhack-sources.bj.bcebos.com/train/attr/"$id".zip -O attr.zip &
 wait
