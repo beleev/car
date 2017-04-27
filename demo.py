@@ -8,7 +8,7 @@ import sys
 from tensorflow.python import debug as tf_debug
 
 FLAGS = None
-path = '/root/car/data/'
+path = '/mnt/data/'
 
 class DataSet(object):
     
@@ -53,8 +53,8 @@ class Trainer(object):
         
     def set_data(self, id_num):
         self.data = DataSet(id_num)
-        self.training_iters = 500
-        #self.training_iters = self.data.num * 2
+        self.training_iters = self.data.num * 2
+        #self.training_iters = 500
 
     def conv2d(self, x, W, b, strides=2):
         x = tf.nn.conv2d(x, W, strides=[1, strides, strides, 1], padding='SAME')
@@ -97,34 +97,34 @@ class Trainer(object):
 
         weights = {
             # 5x5 conv, 3 input, 24 outputs
-            'wc1': tf.Variable(tf.random_normal([5, 5, 3, 24], mean=1/25, stddev=5e-2,  dtype=tf.float32)),
-            'wc2': tf.Variable(tf.random_normal([5, 5, 24, 36], mean=1/25, stddev=5e-2, dtype=tf.float32)),
-            'wc3': tf.Variable(tf.random_normal([5, 5, 36, 48], mean=1/25, stddev=5e-2, dtype=tf.float32)),
-            'wc4': tf.Variable(tf.random_normal([3, 3, 48, 64], mean=1/9, stddev=5e-2,  dtype=tf.float32)),
-            'wc5': tf.Variable(tf.random_normal([3, 3, 64, 64], mean=1/9, stddev=5e-2,  dtype=tf.float32)),
+            'wc1': tf.Variable(tf.random_normal([5, 5, 3, 24], mean=1/25, stddev=5e-2)),
+            'wc2': tf.Variable(tf.random_normal([5, 5, 24, 36], mean=1/25, stddev=5e-2)),
+            'wc3': tf.Variable(tf.random_normal([5, 5, 36, 48], mean=1/25, stddev=5e-2)),
+            'wc4': tf.Variable(tf.random_normal([3, 3, 48, 64], mean=1/9, stddev=5e-2)),
+            'wc5': tf.Variable(tf.random_normal([3, 3, 64, 64], mean=1/9, stddev=5e-2)),
             # fully connected, w*h*64 inputs, 1 outputs
-            'wd1': tf.Variable(tf.random_normal([25600, 1164], mean=1/25600, stddev=5e-2, dtype=tf.float32)),
-            'wd2': tf.Variable(tf.random_normal([1164, 100], mean=1/1164, stddev=5e-2,    dtype=tf.float32)),
-            'wd3': tf.Variable(tf.random_normal([100, 50], mean=1/100, stddev=5e-2,       dtype=tf.float32)),
-            'wd4': tf.Variable(tf.random_normal([50, 10], mean=1/50, stddev=5e-2,         dtype=tf.float32)),
+            'wd1': tf.Variable(tf.random_normal([25600, 1164], mean=1/25600, stddev=5e-2)),
+            'wd2': tf.Variable(tf.random_normal([1164, 100], mean=1/1164, stddev=5e-2)),
+            'wd3': tf.Variable(tf.random_normal([100, 50], mean=1/100, stddev=5e-2)),
+            'wd4': tf.Variable(tf.random_normal([50, 10], mean=1/50, stddev=5e-2)),
             # out
-            'out': tf.Variable(tf.random_normal([10, 1], mean=1/10, stddev=5e-2,          dtype=tf.float32))
+            'out': tf.Variable(tf.random_normal([10, 1], mean=1/10, stddev=5e-2))
         }
         
         biases = {
             # conv
-            'bc1': tf.Variable(tf.random_normal([24], dtype=tf.float32)),
-            'bc2': tf.Variable(tf.random_normal([36], dtype=tf.float32)),
-            'bc3': tf.Variable(tf.random_normal([48], dtype=tf.float32)),
-            'bc4': tf.Variable(tf.random_normal([64], dtype=tf.float32)),
-            'bc5': tf.Variable(tf.random_normal([64], dtype=tf.float32)),
+            'bc1': tf.Variable(tf.random_normal([24])),
+            'bc2': tf.Variable(tf.random_normal([36])),
+            'bc3': tf.Variable(tf.random_normal([48])),
+            'bc4': tf.Variable(tf.random_normal([64])),
+            'bc5': tf.Variable(tf.random_normal([64])),
             # full conn
-            'bd1': tf.Variable(tf.random_normal([1164], dtype=tf.float32)),
-            'bd2': tf.Variable(tf.random_normal([100] , dtype=tf.float32)),
-            'bd3': tf.Variable(tf.random_normal([50]  , dtype=tf.float32)),
-            'bd4': tf.Variable(tf.random_normal([10]  , dtype=tf.float32)),
+            'bd1': tf.Variable(tf.random_normal([1164])),
+            'bd2': tf.Variable(tf.random_normal([100])),
+            'bd3': tf.Variable(tf.random_normal([50])),
+            'bd4': tf.Variable(tf.random_normal([10])),
             # out
-            'out': tf.Variable(tf.random_normal([1], dtype=tf.float32))
+            'out': tf.Variable(tf.random_normal([1]))
         }
 
         self.pred = self.conv_net(self.x, weights, biases, self.keep_prob)
@@ -167,8 +167,9 @@ class Trainer(object):
             print("Model restored from file: %s" % model_path)
             for i in f.keys():
                 x = f[i].value.astype(np.float32).reshape(-1, 320, 320 ,3)
+                x = np.multiply(x, 2.0 / 255.0) - 1
                 pred = sess.run(self.pred, feed_dict={self.x: x, self.keep_prob: 1.})
-                ret[i] = pred.reshape(1).astype(np.float64)
+                ret[i] = pred.reshape(1).astype(np.float64)[0]
             ret.close()
 
 
