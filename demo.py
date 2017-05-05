@@ -29,12 +29,17 @@ class DataSet(object):
             begin = self.index
             end = self.index + size
             image_list = []
+            label_list = []
+            cnt = begin
             for t in self.time[begin:end]:
-                image_list.append(self.image["{:.3f}".format(t)])
+                if self.label[cnt] < 1:
+                    image_list.append(self.image["{:.3f}".format(t)])
+                    label_list.append(self.label[cnt])
+                cnt = cnt + 1
             images = np.array(image_list)
             images = np.multiply(images.astype(np.float32), 2.0 / 255.0)
             images = images - 1
-            labels = self.label[begin:end].reshape(-1, 1)
+            labels = np.array(label_list).reshape(-1, 1)
             if end == self.num:
                 self.index = 0
             else:
