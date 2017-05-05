@@ -2,6 +2,7 @@ import argparse
 import h5py
 import tensorflow as tf
 import numpy as np
+import random
 import time
 import sys
 
@@ -22,6 +23,29 @@ class DataSet(object):
         self.num = len(self.label)
         self.index = 0
 
+        self.leftpool = range(len(self.label))
+        
+    def readrandom(self, size):
+        if len(self.leftpool) < size:
+            return self.read(len(self.leftpool))
+        else:
+            image_list = []
+            label_list = []
+            for i in range(size):
+                index = random.choice(range(len(self.leftpool)))
+                sel = self.leftpool.pop(index)
+                if self.label[sel] < 1:
+                    image_list.append(self.image["{:.3f}".format(self.time[sel])])
+                    label_list.append(self.label[sel])
+            images = np.array(image_list)
+            images = np.multiply(images.astype(np.float32), 2.0 / 255.0)
+            images = images - 1
+            labels = np.array(label_list).reshape(-1, 1) * 100000
+            if len(self.leftpool) == 0:
+                self.leftpool = range(len(self.label))
+            return images, labels
+            
+
     def read(self, size):
         if size + self.index > self.num:
             return self.read(self.num - self.index)
@@ -39,19 +63,19 @@ class DataSet(object):
             images = np.array(image_list)
             images = np.multiply(images.astype(np.float32), 2.0 / 255.0)
             images = images - 1
-            labels = np.array(label_list).reshape(-1, 1)
+            labels = np.array(label_list).reshape(-1, 1) * 100000
             if end == self.num:
                 self.index = 0
             else:
                 self.index = end 
-        return images, labels
+            return images, labels
             
         
 class Trainer(object):
 
     def __init__(self):
         self.learning_rate = 0.0001
-        self.dropout = 0.75
+        self.dropout = 0.9
 
         self.batch_size = 100
         self.display_step = 1
@@ -92,6 +116,7 @@ class Trainer(object):
         fc4 = tf.nn.relu(fc4)
         fc5 = tf.nn.dropout(fc4, dropout)
         out = tf.add(tf.matmul(fc5, weights['out']), biases['out'])
+        #out = tf.matmul(fc5, weights['out'])
         #out = tf.nn.tanh(out)
         return out
 
@@ -102,18 +127,18 @@ class Trainer(object):
 
         weights = {
             # 5x5 conv, 3 input, 24 outputs
-            'wc1': tf.Variable(tf.random_normal([5, 5, 3, 24], mean=1/25, stddev=5e-2)),
-            'wc2': tf.Variable(tf.random_normal([5, 5, 24, 36], mean=1/25, stddev=5e-2)),
-            'wc3': tf.Variable(tf.random_normal([5, 5, 36, 48], mean=1/25, stddev=5e-2)),
-            'wc4': tf.Variable(tf.random_normal([3, 3, 48, 64], mean=1/9, stddev=5e-2)),
-            'wc5': tf.Variable(tf.random_normal([3, 3, 64, 64], mean=1/9, stddev=5e-2)),
+            'wc1': tf.Variable(tf.random_normal([5, 5, 3, 24], mean=1/25, stddev=0.1)),
+            'wc2': tf.Variable(tf.random_normal([5, 5, 24, 36], mean=1/25, stddev=0.1)),
+            'wc3': tf.Variable(tf.random_normal([5, 5, 36, 48], mean=1/25, stddev=0.1)),
+            'wc4': tf.Variable(tf.random_normal([3, 3, 48, 64], mean=1/9, stddev=0.1)),
+            'wc5': tf.Variable(tf.random_normal([3, 3, 64, 64], mean=1/9, stddev=0.1)),
             # fully connected, w*h*64 inputs, 1 outputs
-            'wd1': tf.Variable(tf.random_normal([25600, 1164], mean=1/25600, stddev=5e-2)),
-            'wd2': tf.Variable(tf.random_normal([1164, 100], mean=1/1164, stddev=5e-2)),
-            'wd3': tf.Variable(tf.random_normal([100, 50], mean=1/100, stddev=5e-2)),
-            'wd4': tf.Variable(tf.random_normal([50, 10], mean=1/50, stddev=5e-2)),
+            'wd1': tf.Variable(tf.random_normal([25600, 1164], mean=1/25600, stddev=0.1)),
+            'wd2': tf.Variable(tf.random_normal([1164, 100], mean=1/1164, stddev=0.1)),
+            'wd3': tf.Variable(tf.random_normal([100, 50], mean=1/100, stddev=0.1)),
+            'wd4': tf.Variable(tf.random_normal([50, 10], mean=1/50, stddev=0.1)),
             # out
-            'out': tf.Variable(tf.random_normal([10, 1], mean=1/10, stddev=5e-2))
+            'out': tf.Variable(tf.random_normal([10, 1], mean=1/10, stddev=0.1))
         }
         
         biases = {
@@ -149,12 +174,17 @@ class Trainer(object):
             step = 1
             # Keep training until reach max iterations
             while step * self.batch_size <= self.training_iters:
-                batch_x, batch_y = self.data.read(self.batch_size)
+                batch_x, batch_y = self.data.readrandom(self.batch_size)
                 sess.run(optimizer, feed_dict={self.x: batch_x, self.y: batch_y, self.keep_prob: self.dropout})
                 if step % self.display_step == 0:
+                    pred = sess.run(self.pred, feed_dict={self.x: batch_x, self.keep_prob: 1.})
                     loss = sess.run(self.cost, feed_dict={self.x: batch_x, self.y: batch_y, self.keep_prob: 1.})
                     print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + '    ' +\
                           "Iter " + str(step * self.batch_size) + ", Minibatch Loss= " + "{:.16f}".format(loss))
+                    print("Prediction:")
+                    print(pred.reshape(1, -1))
+                    print("Reality:")
+                    print(batch_y.reshape(1, -1))
                 step += 1
             if save_path:
                 save_model = saver.save(sess, save_path)
@@ -170,11 +200,14 @@ class Trainer(object):
             sess.run(init)
             saver.restore(sess, model_path)
             print("Model restored from file: %s" % model_path)
+            result_list = []
             for i in f.keys():
                 x = f[i].value.astype(np.float32).reshape(-1, 320, 320 ,3)
                 x = np.multiply(x, 2.0 / 255.0) - 1
                 pred = sess.run(self.pred, feed_dict={self.x: x, self.keep_prob: 1.})
-                ret[i] = pred.reshape(1).astype(np.float64)[0]
+                print pred.reshape(1).astype(np.float64)[0]
+                result_list.append(pred.reshape(1).astype(np.float64)[0])
+            ret['attrs'] = np.array(result_list).reshape(-1, 1)
             ret.close()
 
 
