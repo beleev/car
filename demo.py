@@ -34,7 +34,7 @@ class DataSet(object):
             for i in range(size):
                 index = random.choice(range(len(self.leftpool)))
                 sel = self.leftpool.pop(index)
-                if self.label[sel] < 1:
+                if abs(self.label[sel]) < 1:
                     image_list.append(self.image["{:.3f}".format(self.time[sel])])
                     label_list.append(self.label[sel])
             images = np.array(image_list)
@@ -56,7 +56,7 @@ class DataSet(object):
             label_list = []
             cnt = begin
             for t in self.time[begin:end]:
-                if self.label[cnt] < 1:
+                if abs(self.label[cnt]) < 1:
                     image_list.append(self.image["{:.3f}".format(t)])
                     label_list.append(self.label[cnt])
                 cnt = cnt + 1
@@ -75,7 +75,7 @@ class Trainer(object):
 
     def __init__(self):
         self.learning_rate = 0.0001
-        self.dropout = 0.9
+        self.dropout = 0.5
 
         self.batch_size = 100
         self.display_step = 1
@@ -125,7 +125,7 @@ class Trainer(object):
         self.y = tf.placeholder(tf.float32, [None, 1])
         self.keep_prob = tf.placeholder(tf.float32)
 
-        weights = {
+        self.weights = {
             # 5x5 conv, 3 input, 24 outputs
             'wc1': tf.Variable(tf.random_normal([5, 5, 3, 24], mean=1/25, stddev=0.1)),
             'wc2': tf.Variable(tf.random_normal([5, 5, 24, 36], mean=1/25, stddev=0.1)),
@@ -141,7 +141,7 @@ class Trainer(object):
             'out': tf.Variable(tf.random_normal([10, 1], mean=1/10, stddev=0.1))
         }
         
-        biases = {
+        self.biases = {
             # conv
             'bc1': tf.Variable(tf.random_normal([24])),
             'bc2': tf.Variable(tf.random_normal([36])),
@@ -157,7 +157,7 @@ class Trainer(object):
             'out': tf.Variable(tf.random_normal([1]))
         }
 
-        self.pred = self.conv_net(self.x, weights, biases, self.keep_prob)
+        self.pred = self.conv_net(self.x, self.weights, self.biases, self.keep_prob)
         self.cost = tf.reduce_mean(tf.square(self.pred - self.y))
         
     def run(self, model_path=None, save_path=None):
