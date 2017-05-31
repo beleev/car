@@ -3,5 +3,5 @@
 *data*
 *.h5
 *.bak
-model*
+*model*
 deprecate/*
